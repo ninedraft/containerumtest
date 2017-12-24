@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/satori/go.uuid"
 	"time"
 )
 
-type User struct {
-	UUID             string
+type user struct {
+	UUID             uuid.UUID
 	Login            string
 	RegistrationDate time.Time
 }
