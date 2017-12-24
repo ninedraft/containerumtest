@@ -9,10 +9,13 @@ type storage struct {
 	db *storm.DB
 }
 
-func (sto *storage) CreateUser(config *UserConfig) (*uuid.UUID, error) {
+func (sto *storage) CreateUser(config *UserConfig) (id *uuid.UUID, er error) {
 	user := config.User()
-	err := sto.db.Save(user)
-	if err != nil {
+	transaction, err := sto.db.Begin(true)
+	if err = transaction.Save(user); err != nil {
+		return nil, err
+	}
+	if err = transaction.Commit(); err != nil {
 		return nil, err
 	}
 	return &user.UUID, nil
