@@ -6,7 +6,7 @@ import (
 )
 
 type user struct {
-	UUID             uuid.UUID
-	Login            string
-	RegistrationDate time.Time
+	UUID             uuid.UUID `storm:"unique"`
+	Login            string    `storm:"index"`
+	RegistrationDate time.Time `storm:"index"`
 }
