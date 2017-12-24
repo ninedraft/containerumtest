@@ -12,6 +12,7 @@ type storage struct {
 func (sto *storage) CreateUser(config *UserConfig) (id *uuid.UUID, er error) {
 	user := config.User()
 	transaction, err := sto.db.Begin(true)
+	defer transaction.Rollback()
 	if err = transaction.Save(user); err != nil {
 		return nil, err
 	}
