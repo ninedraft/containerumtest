@@ -21,3 +21,16 @@ func (sto *storage) CreateUser(config *UserConfig) (id *uuid.UUID, er error) {
 	}
 	return &user.UUID, nil
 }
+
+func (sto *storage) FindByLogin(login string) (*User, error) {
+	var user User
+	transaction, err := sto.db.Begin(false)
+	defer transaction.Rollback()
+	if err = transaction.One("Login", login, &user); err != nil {
+		return nil, err
+	}
+	if err = transaction.Commit(); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
