@@ -2,26 +2,14 @@
 
 
 [[projects]]
-  name = "github.com/asdine/storm"
-  packages = [".","codec","codec/json","index","internal","q"]
-  revision = "dbd37722730b6cb703b5bd825c3f142d87358525"
-  version = "v2.0.0"
-
-[[projects]]
-  name = "github.com/coreos/bbolt"
+  name = "github.com/satori/go.uuid"
   packages = ["."]
-  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
-  version = "v1.3.0"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/sys"
-  packages = ["unix"]
-  revision = "83801418e1b59fb1880e363299581ee543af32ca"
+  revision = "879c5887cd475cd7864858769793b2ceb0d44feb"
+  version = "v1.1.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "81c794acf01bc1182650199d040a0ba5202a48b8a1606482692328479ab8822b"
+  inputs-digest = "4bfe0a295f998a250c53fcf0757ab85c1ab64e8cfbfd362e37614b3c7ee0e3db"
   solver-name = "gps-cdcl"
   solver-version = 1
