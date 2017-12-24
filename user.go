@@ -8,7 +8,7 @@ import (
 // User struct.
 // To create User instance, use UserConfig
 type User struct {
-	UUID             uuid.UUID `storm:"unique"`
+	UUID             string    `storm:"id"`
 	Login            string    `storm:"index"`
 	RegistrationDate time.Time `storm:"index"`
 }
@@ -27,7 +27,7 @@ func (config *UserConfig) User() *User {
 		config.RegistrationDate = &now
 	}
 	return &User{
-		UUID:             uuid.NewV4(),
+		UUID:             uuid.NewV4().String(),
 		Login:            config.Login,
 		RegistrationDate: *config.RegistrationDate,
 	}
