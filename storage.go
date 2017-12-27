@@ -47,3 +47,16 @@ func (sto *Storage) FindByLogin(login string) ([]*User, error) {
 	}
 	return users, nil
 }
+
+func (sto *Storage) FindByID(ID string) (*User, error) {
+	var user User
+	transaction, err := sto.db.Begin(true)
+	defer transaction.Rollback()
+	if err = transaction.One("id", ID, &user); err != nil {
+		return nil, err
+	}
+	if err = transaction.Commit(); err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
