@@ -104,6 +104,7 @@ func TestRPC(test *testing.T) {
 	defer drop()
 	service := testServiceCreateUser(test, storage)
 	testMethod(test, service, findTestUser)
+	testMethod(test, service, updateUser)
 }
 
 func testServiceCreateUser(test *testing.T, storage *Storage) *Service {
@@ -168,5 +169,39 @@ func findTestUser(test *testing.T, client *rpc.Client) {
 			lg += fmt.Sprintf("%d %s %s\n", n, user.Login, user.UUID)
 		}
 		//test.Logf(lg)
+	}
+}
+
+func updateUser(test *testing.T, client *rpc.Client) {
+	var ID string
+	err := client.Call("user.CreateUser",
+		&UserConfig{
+			Login:            "oldLogin",
+			RegistrationDate: nil,
+			UUID:             "",
+		}, &ID)
+
+	if err != nil {
+		test.Fatalf("error while calling user.CreateUser: %v\n", err)
+	}
+
+	var status string
+	newUserData := &UserConfig{
+		Login:            "newLogin",
+		RegistrationDate: nil,
+		UUID:             ID,
+	}
+	err = client.Call("user.UpdateUser", newUserData, &status)
+	if err != nil {
+		test.Fatalf("error while calling user.UpdateUser: %v\n", err)
+	}
+
+	var replFind User
+	err = client.Call("user.FindByID", ID, &replFind)
+	if err != nil {
+		test.Fatalf("error while calling user.FindByID: %v\n", err)
+	}
+	if replFind.Login != newUserData.Login {
+		test.Fatalf("login is not updated!")
 	}
 }
