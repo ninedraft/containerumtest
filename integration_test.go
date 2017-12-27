@@ -49,7 +49,7 @@ func TestCreateUser(test *testing.T) {
 		"purse", "prosecution", "desert", "forearm", "knuckle"}
 	for _, login := range logins {
 		var id string
-		err = storage.CreateUser(&UserConfig{login, nil}, &id)
+		err = storage.CreateUser(UserConfig{login, nil}, &id)
 		switch {
 		case id == "" && err == nil:
 			test.Fatalf("nil id and err while creating user %s\n", login)
@@ -86,7 +86,7 @@ func TestServiceCreateUser(test *testing.T) {
 
 	client := jsonrpc.NewClient(conn)
 	var repl interface{}
-	err = client.Call("User.CreateUser",
+	err = client.Call("user.CreateUser",
 		&UserConfig{
 			"Merlin",
 			nil,
@@ -94,5 +94,5 @@ func TestServiceCreateUser(test *testing.T) {
 	if err != nil {
 		test.Fatalf("error while calling server: %v\n", err)
 	}
-	test.Logf("repy: %v\n", repl)
+	test.Logf("reply: %v\n", repl)
 }
