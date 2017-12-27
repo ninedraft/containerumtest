@@ -15,8 +15,9 @@ type User struct {
 
 // UserConfig creates new User
 type UserConfig struct {
-	Login            string     `json:"login"`
-	RegistrationDate *time.Time `json:"registration_date"`
+	UUID             string     `json:"uuid, omitempty"`
+	Login            string     `json:"login, omitempty"`
+	RegistrationDate *time.Time `json:"registration_date, omitempty"`
 }
 
 // User method emits new User from UserConfig with same Login field.

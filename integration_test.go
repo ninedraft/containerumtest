@@ -81,7 +81,11 @@ func TestCreateUser(test *testing.T) {
 
 	for _, login := range logins {
 		var id string
-		err := storage.CreateUser(UserConfig{login, nil}, &id)
+		err := storage.CreateUser(UserConfig{
+			Login:            login,
+			RegistrationDate: nil,
+			UUID:             "",
+		}, &id)
 		switch {
 		case id == "" && err == nil:
 			test.Fatalf("nil id and err while creating user %s\n", login)
@@ -140,8 +144,9 @@ func createUser(test *testing.T, client *rpc.Client) {
 	for _, login := range logins {
 		err := client.Call("user.CreateUser",
 			&UserConfig{
-				login,
-				nil,
+				Login:            login,
+				RegistrationDate: nil,
+				UUID:             "",
 			}, &repl)
 		if err != nil {
 			test.Fatalf("error while calling server: %v\n", err)
