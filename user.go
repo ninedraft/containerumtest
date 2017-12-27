@@ -27,8 +27,11 @@ func (config *UserConfig) User() *User {
 		now := time.Now()
 		config.RegistrationDate = &now
 	}
+	if config.UUID == "" {
+		config.UUID = uuid.NewV4().String()
+	}
 	return &User{
-		UUID:             uuid.NewV4().String(),
+		UUID:             config.UUID,
 		Login:            config.Login,
 		RegistrationDate: *config.RegistrationDate,
 	}
