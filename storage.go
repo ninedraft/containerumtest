@@ -23,54 +23,58 @@ func NewStorage(filepath string) (*Storage, error) {
 	}, nil
 }
 
-func (sto *Storage) CreateUser(config *UserConfig) (string, error) {
+func (sto *Storage) CreateUser(config UserConfig, id *string) error {
 	user := config.User()
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
 	if err = transaction.Save(user); err != nil {
-		return "", err
+		return err
 	}
 	if err = transaction.Commit(); err != nil {
-		return "", err
+		return err
 	}
-	return user.UUID, nil
+	*id = user.UUID
+	return nil
 }
 
-func (sto *Storage) FindByLogin(login string) ([]*User, error) {
+func (sto *Storage) FindByLogin(login string, retUsers *[]*User) error {
 	var users []*User
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
 	if err = transaction.Find("Login", login, &users); err != nil {
-		return nil, err
+		return err
 	}
 	if err = transaction.Commit(); err != nil {
-		return nil, err
+		return err
 	}
-	return users, nil
+	*retUsers = users
+	return nil
 }
 
-func (sto *Storage) FindByID(ID string) (*User, error) {
+func (sto *Storage) FindByID(ID string, retUser *User) error {
 	var user User
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
 	if err = transaction.One("id", ID, &user); err != nil {
-		return nil, err
+		return err
 	}
 	if err = transaction.Commit(); err != nil {
-		return nil, err
+		return err
 	}
-	return &user, nil
+	*retUser = user
+	return nil
 }
 
-func (sto *Storage) FindeByDate(date time.Time) ([]*User, error) {
+func (sto *Storage) FindeByDate(date time.Time, retUsers *[]*User) error {
 	var users []*User
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
 	if err = transaction.Find("RegistrationDate", date, &users); err != nil {
-		return nil, err
+		return err
 	}
 	if err = transaction.Commit(); err != nil {
-		return nil, err
+		return err
 	}
-	return users, nil
+	*retUsers = users
+	return nil
 }
