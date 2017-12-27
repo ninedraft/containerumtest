@@ -3,8 +3,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
 	"path"
@@ -13,6 +15,13 @@ import (
 
 const (
 	test_dir = "test_files"
+	addr     = ":8222"
+)
+
+var (
+	logins = []string{"crook", "whale", "estrogen", "koala", "cursor",
+		"populist", "gym", "server", "garden", "game", "bankbook",
+		"purse", "prosecution", "desert", "forearm", "knuckle"}
 )
 
 func init() {
@@ -22,9 +31,39 @@ func init() {
 	}
 }
 
+func createTestStorage(test *testing.T) (*Storage, func()) {
+	filename := path.Join(test_dir, test.Name()+".db")
+	storage, err := NewStorage(filename)
+	switch {
+	case storage == nil && err != nil:
+		test.Fatalf("db is nil, error while creating storage: %v\n", err)
+	case storage != nil && err != nil:
+		test.Fatalf("db is not nil, error while creating storage: %v\n", err)
+	case storage == nil && err == nil:
+		test.Fatalf("db is nil and err is nil\n")
+	default: // storage != nil && err == nil
+	}
+	return storage, func() {
+		if err := storage.db.Close(); err != nil {
+			test.Errorf("error while closing test storage: %v\n", err)
+		}
+
+		if err = os.Remove(filename); err != nil {
+			test.Errorf("error while removing test db file: %v\n", err)
+		}
+	}
+}
+
 func TestNewStorage(test *testing.T) {
 	filename := path.Join(test_dir, test.Name()+".db")
 	storage, err := NewStorage(filename)
+	defer func() {
+		storage.db.Close()
+		if err := os.Remove(filename); err != nil {
+			test.Errorf("error while removing test db file: %v\n", err)
+		}
+	}()
+
 	switch {
 	case storage == nil && err != nil:
 		test.Fatalf("db is nil, error while creating storage: %v\n", err)
@@ -37,19 +76,12 @@ func TestNewStorage(test *testing.T) {
 }
 
 func TestCreateUser(test *testing.T) {
-	filename := path.Join(test_dir, test.Name()+".db")
-	storage, err := NewStorage(filename)
-	if err != nil {
-		test.Fatalf("error while creating storage: %v\n", err)
-	}
-	defer storage.db.Close()
+	storage, drop := createTestStorage(test)
+	defer drop()
 
-	logins := []string{"crook", "whale", "estrogen", "koala", "cursor",
-		"populist", "gym", "server", "garden", "game", "bankbook",
-		"purse", "prosecution", "desert", "forearm", "knuckle"}
 	for _, login := range logins {
 		var id string
-		err = storage.CreateUser(UserConfig{login, nil}, &id)
+		err := storage.CreateUser(UserConfig{login, nil}, &id)
 		switch {
 		case id == "" && err == nil:
 			test.Fatalf("nil id and err while creating user %s\n", login)
@@ -63,20 +95,19 @@ func TestCreateUser(test *testing.T) {
 	}
 }
 
-func TestServiceCreateUser(test *testing.T) {
-	addr := ":8222"
-	filename := path.Join(test_dir, test.Name()+".db")
-	storage, err := NewStorage(filename)
-	if err != nil {
-		test.Fatalf("error while creating storage: %v\n", err)
-	}
-	defer storage.db.Close()
+func TestRPC(test *testing.T) {
+	storage, drop := createTestStorage(test)
+	defer drop()
+	service := testServiceCreateUser(test, storage)
+	testMethod(test, service, findTestUser)
+}
 
+func testServiceCreateUser(test *testing.T, storage *Storage) *Service {
 	service, err := NewService(storage)
 	if err != nil {
 		test.Fatalf("error while creating service: %v\n", err)
 	}
-	go service.Start(":8222")
+	go service.Start(addr)
 
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
@@ -85,14 +116,52 @@ func TestServiceCreateUser(test *testing.T) {
 	defer conn.Close()
 
 	client := jsonrpc.NewClient(conn)
-	var repl interface{}
-	err = client.Call("user.CreateUser",
-		&UserConfig{
-			"Merlin",
-			nil,
-		}, &repl)
+	createUser(test, client)
+	return service
+}
+
+func testMethod(test *testing.T, service *Service, method func(*testing.T, *rpc.Client)) {
+	conn := dialTestConnection(test)
+	defer conn.Close()
+	client := jsonrpc.NewClient(conn)
+	method(test, client)
+}
+
+func dialTestConnection(test *testing.T) net.Conn {
+	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		test.Fatalf("error while calling server: %v\n", err)
+		test.Fatalf("error while dialing connection: %v\n", err)
 	}
-	test.Logf("reply: %v\n", repl)
+	return conn
+}
+
+func createUser(test *testing.T, client *rpc.Client) {
+	var repl string
+	for _, login := range logins {
+		err := client.Call("user.CreateUser",
+			&UserConfig{
+				login,
+				nil,
+			}, &repl)
+		if err != nil {
+			test.Fatalf("error while calling server: %v\n", err)
+		}
+		//test.Logf("reply: %v\n", repl)
+	}
+
+}
+
+func findTestUser(test *testing.T, client *rpc.Client) {
+	var replFind []User
+	for _, login := range logins {
+		err := client.Call("user.FindByLogin", login, &replFind)
+		if err != nil {
+			test.Fatalf("error while calling user.FindByLogin: %v\n", err)
+		}
+		var lg string
+		for n, user := range replFind {
+			lg += fmt.Sprintf("%d %s %s\n", n, user.Login, user.UUID)
+		}
+		//test.Logf(lg)
+	}
 }
