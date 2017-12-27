@@ -11,11 +11,11 @@ type Service struct {
 }
 
 func NewService(storage *Storage) (*Service, error) {
-	err := rpc.RegisterName("user", storage)
+	server := rpc.NewServer()
+	err := server.RegisterName("user", storage)
 	if err != nil {
 		return nil, err
 	}
-	server := rpc.NewServer()
 	return &Service{
 		server,
 	}, nil
