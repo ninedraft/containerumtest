@@ -4,26 +4,25 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	errplus "github.com/pkg/errors"
-	"os"
 )
 
-type storage struct {
+type Storage struct {
 	db *storm.DB
 }
 
-func newStorage(filepath string) (*storage, error) {
+func NewStorage(filepath string) (*Storage, error) {
 	db, err := storm.Open(filepath,
 		storm.Codec(protobuf.Codec),
 		storm.Batch())
 	if err != nil {
 		return nil, errplus.Wrap(err, "error while opening DB file")
 	}
-	return &storage{
+	return &Storage{
 		db: db,
 	}, nil
 }
 
-func (sto *storage) CreateUser(config *UserConfig) (string, error) {
+func (sto *Storage) CreateUser(config *UserConfig) (string, error) {
 	user := config.User()
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
@@ -36,7 +35,7 @@ func (sto *storage) CreateUser(config *UserConfig) (string, error) {
 	return user.UUID, nil
 }
 
-func (sto *storage) FindByLogin(login string) ([]*User, error) {
+func (sto *Storage) FindByLogin(login string) ([]*User, error) {
 	var users []*User
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
