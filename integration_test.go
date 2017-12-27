@@ -4,6 +4,8 @@ package main
 
 import (
 	"log"
+	"net"
+	"net/rpc/jsonrpc"
 	"os"
 	"path"
 	"testing"
@@ -46,10 +48,8 @@ func TestCreateUser(test *testing.T) {
 		"populist", "gym", "server", "garden", "game", "bankbook",
 		"purse", "prosecution", "desert", "forearm", "knuckle"}
 	for _, login := range logins {
-		id, err := storage.CreateUser(&UserConfig{
-			login,
-			nil,
-		})
+		var id string
+		err = storage.CreateUser(&UserConfig{login, nil}, &id)
 		switch {
 		case id == "" && err == nil:
 			test.Fatalf("nil id and err while creating user %s\n", login)
@@ -61,4 +61,38 @@ func TestCreateUser(test *testing.T) {
 		default: // id != "" && err == nil
 		}
 	}
+}
+
+func TestServiceCreateUser(test *testing.T) {
+	addr := ":8222"
+	filename := path.Join(test_dir, test.Name()+".db")
+	storage, err := NewStorage(filename)
+	if err != nil {
+		test.Fatalf("error while creating storage: %v\n", err)
+	}
+	defer storage.db.Close()
+
+	service, err := NewService(storage)
+	if err != nil {
+		test.Fatalf("error while creating service: %v\n", err)
+	}
+	go service.Start(":8222")
+
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		test.Fatalf("error while dialing connection: %v\n", err)
+	}
+	defer conn.Close()
+
+	client := jsonrpc.NewClient(conn)
+	var repl interface{}
+	err = client.Call("User.CreateUser",
+		&UserConfig{
+			"Merlin",
+			nil,
+		}, &repl)
+	if err != nil {
+		test.Fatalf("error while calling server: %v\n", err)
+	}
+	test.Logf("repy: %v\n", repl)
 }
