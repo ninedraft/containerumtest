@@ -23,7 +23,7 @@ func NewService(storage *Storage) (*Service, error) {
 
 func (service *Service) Start(addr string) error {
 	service.server.HandleHTTP(rpc.DefaultRPCPath, rpc.DefaultDebugPath)
-	listener, err := net.Listen("tcp", ":8222")
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
