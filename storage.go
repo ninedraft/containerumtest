@@ -2,10 +2,25 @@ package main
 
 import (
 	"github.com/asdine/storm"
+	"github.com/asdine/storm/codec/protobuf"
+	errplus "github.com/pkg/errors"
+	"os"
 )
 
 type storage struct {
 	db *storm.DB
+}
+
+func newStorage(filepath string) (*storage, error) {
+	db, err := storm.Open(filepath,
+		storm.Codec(protobuf.Codec),
+		storm.Batch())
+	if err != nil {
+		return nil, errplus.Wrap(err, "error while opening DB file")
+	}
+	return &storage{
+		db: db,
+	}, nil
 }
 
 func (sto *storage) CreateUser(config *UserConfig) (string, error) {
