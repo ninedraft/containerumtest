@@ -60,7 +60,7 @@ func (sto *Storage) FindByID(ID string, retUser *User) error {
 	var user User
 	transaction, err := sto.db.Begin(true)
 	defer transaction.Rollback()
-	if err = transaction.One("id", ID, &user); err != nil {
+	if err = transaction.One("UUID", ID, &user); err != nil {
 		return err
 	}
 	if err = transaction.Commit(); err != nil {
@@ -90,7 +90,7 @@ func (storage *Storage) UpdateUser(user UserConfig, ret *string) error {
 	}
 	transaction, err := storage.db.Begin(true)
 	defer transaction.Rollback()
-	if err = transaction.Update(&user); err != nil {
+	if err = transaction.Update(user.User()); err != nil {
 		return err
 	}
 	if err = transaction.Commit(); err != nil {
