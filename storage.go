@@ -4,6 +4,7 @@ import (
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	errplus "github.com/pkg/errors"
+	"time"
 )
 
 type Storage struct {
@@ -59,4 +60,17 @@ func (sto *Storage) FindByID(ID string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (sto *Storage) FindeByDate(date time.Time) ([]*User, error) {
+	var users []*User
+	transaction, err := sto.db.Begin(true)
+	defer transaction.Rollback()
+	if err = transaction.Find("RegistrationDate", date, &users); err != nil {
+		return nil, err
+	}
+	if err = transaction.Commit(); err != nil {
+		return nil, err
+	}
+	return users, nil
 }
