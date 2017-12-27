@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"github.com/asdine/storm"
 	"github.com/asdine/storm/codec/protobuf"
 	errplus "github.com/pkg/errors"
 	"time"
+)
+
+var (
+	ErrUUIDIsNotProvided = fmt.Errorf("user UUID is not provided")
 )
 
 type Storage struct {
@@ -76,5 +81,21 @@ func (sto *Storage) FindeByDate(date time.Time, retUsers *[]*User) error {
 		return err
 	}
 	*retUsers = users
+	return nil
+}
+
+func (storage *Storage) UpdateUser(user UserConfig, ret *string) error {
+	if user.UUID == "" {
+		return ErrUUIDIsNotProvided
+	}
+	transaction, err := storage.db.Begin(true)
+	defer transaction.Rollback()
+	if err = transaction.Update(&user); err != nil {
+		return err
+	}
+	if err = transaction.Commit(); err != nil {
+		return err
+	}
+	*ret = "ok"
 	return nil
 }
